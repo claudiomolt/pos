@@ -136,6 +136,11 @@ export default function SetupPage() {
           Your keys, your sats. No custodian.
         </p>
       </div>
+
+      {/* Footer */}
+      <footer className="absolute bottom-4 left-0 right-0 text-center">
+        <p className="text-[10px] text-zinc-700 font-mono">v0.1.0 · NIP-15 · La Crypta</p>
+      </footer>
     </main>
   )
 }
