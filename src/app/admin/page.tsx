@@ -1,73 +1,139 @@
 'use client'
 
+import Link from 'next/link'
 import Navbar from '@/components/shared/Navbar'
+import NostrLogin from '@/components/shared/NostrLogin'
+import { useNostrStore } from '@/stores/nostr'
+import { useStall } from '@/hooks/useStall'
+import { useProducts } from '@/hooks/useProducts'
 
-export default function AdminPage() {
+function shortenPubkey(pubkey: string): string {
+  if (pubkey.length <= 20) return pubkey
+  return `${pubkey.slice(0, 10)}...${pubkey.slice(-8)}`
+}
+
+function Dashboard({ pubkey }: { pubkey: string }) {
+  const { stalls, isLoading: stallsLoading } = useStall(pubkey)
+  const { products } = useProducts(pubkey)
+
   return (
-    <div className="min-h-screen bg-[#060a12] text-white">
-      <Navbar title="Admin Panel" />
+    <div className="space-y-6">
+      {/* Pubkey */}
+      <div className="rounded-xl border border-zinc-800 bg-[#0f1729] p-4">
+        <p className="text-xs text-zinc-500 mb-1">Merchant Pubkey</p>
+        <p className="font-mono text-sm text-[#f7931a] break-all">{shortenPubkey(pubkey)}</p>
+      </div>
 
-      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        {/* Login */}
-        <div className="rounded-xl border border-zinc-800 bg-[#0f1729] p-6 text-center space-y-4">
-          <div className="text-4xl">🔐</div>
-          <h2 className="text-lg font-semibold">Connect with Nostr</h2>
-          <p className="text-sm text-zinc-400">Sign in with your Nostr key to manage your stalls and products</p>
-          <div className="space-y-2">
-            <button className="w-full rounded-lg bg-[#f7931a] px-4 py-3 font-semibold text-black hover:bg-[#e8851a] transition">
-              🦊 Login with Extension (NIP-07)
-            </button>
-            <button className="w-full rounded-lg border border-zinc-700 bg-[#0f1729] px-4 py-3 text-sm text-zinc-300 hover:border-[#f7931a] transition">
-              🔑 nsecBunker
-            </button>
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-lg border border-zinc-800 bg-[#0f1729] p-3 text-center">
+          <p className="text-xl font-bold text-[#f7931a]">{stalls.length}</p>
+          <p className="text-xs text-zinc-500">Stalls</p>
+        </div>
+        <div className="rounded-lg border border-zinc-800 bg-[#0f1729] p-3 text-center">
+          <p className="text-xl font-bold text-[#f7931a]">{products.length}</p>
+          <p className="text-xs text-zinc-500">Products</p>
+        </div>
+        <Link
+          href="/admin/sales"
+          className="rounded-lg border border-zinc-800 bg-[#0f1729] p-3 text-center hover:border-[#f7931a]/50 transition"
+        >
+          <p className="text-xl font-bold text-[#f7931a]">⚡</p>
+          <p className="text-xs text-zinc-500">Sales</p>
+        </Link>
+      </div>
+
+      {/* Stalls */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Your Stalls</h3>
+          <Link href="/admin/stalls" className="text-xs text-[#f7931a] hover:underline">View all →</Link>
         </div>
 
-        {/* Dashboard Preview (would show after login) */}
-        <div className="space-y-4 opacity-60">
-          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Your Stalls</h3>
+        {stallsLoading && (
+          <div className="rounded-lg border border-zinc-800 bg-[#0f1729] p-6 text-center text-zinc-500 text-sm">
+            Loading stalls...
+          </div>
+        )}
 
-          {[
-            { name: 'Barra', products: 8, currency: 'ARS' },
-            { name: 'Comida', products: 5, currency: 'ARS' },
-            { name: 'Merch', products: 23, currency: 'SAT' },
-          ].map((stall) => (
-            <a
-              key={stall.name}
-              href="/admin/stalls/demo"
+        {!stallsLoading && stalls.length === 0 && (
+          <div className="rounded-lg border border-zinc-800 bg-[#0f1729] p-6 text-center text-zinc-500 text-sm">
+            No stalls found. Create your first one!
+          </div>
+        )}
+
+        {stalls.slice(0, 4).map((stall) => {
+          const stallProducts = products.filter((p) => p.stallId === stall.id)
+          return (
+            <Link
+              key={stall.id}
+              href={`/admin/stalls/${stall.id}`}
               className="block rounded-lg border border-zinc-800 bg-[#0f1729] px-4 py-3 hover:border-[#f7931a]/50 transition"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{stall.name}</p>
-                  <p className="text-xs text-zinc-500">{stall.products} products · {stall.currency}</p>
+                  <p className="text-xs text-zinc-500">{stallProducts.length} products · {stall.currency}</p>
                 </div>
                 <span className="text-zinc-600">→</span>
               </div>
-            </a>
-          ))}
+            </Link>
+          )
+        })}
 
-          <a
-            href="/admin/stalls"
-            className="block w-full rounded-lg border border-dashed border-zinc-700 px-4 py-3 text-center text-sm text-zinc-500 hover:border-[#f7931a] hover:text-[#f7931a] transition"
-          >
-            + Create New Stall
-          </a>
-        </div>
+        <Link
+          href="/admin/stalls/new"
+          className="block w-full rounded-lg border border-dashed border-zinc-700 px-4 py-3 text-center text-sm text-zinc-500 hover:border-[#f7931a] hover:text-[#f7931a] transition"
+        >
+          + Create New Stall
+        </Link>
+      </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Stalls', value: '3' },
-            { label: 'Products', value: '36' },
-            { label: 'Sales Today', value: '12' },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-lg border border-zinc-800 bg-[#0f1729] p-3 text-center">
-              <p className="text-xl font-bold text-[#f7931a]">{stat.value}</p>
-              <p className="text-xs text-zinc-500">{stat.label}</p>
+      {/* Nav */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/admin/stalls"
+          className="rounded-lg border border-zinc-800 bg-[#0f1729] px-4 py-3 text-center text-sm hover:border-[#f7931a]/50 transition"
+        >
+          🏪 Stalls
+        </Link>
+        <Link
+          href="/admin/sales"
+          className="rounded-lg border border-zinc-800 bg-[#0f1729] px-4 py-3 text-center text-sm hover:border-[#f7931a]/50 transition"
+        >
+          ⚡ Sales History
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+export default function AdminPage() {
+  const { merchantPubkey } = useNostrStore()
+
+  return (
+    <div className="min-h-screen bg-[#060a12] text-white">
+      <Navbar title="Admin Panel" backHref="/" />
+
+      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+        {!merchantPubkey ? (
+          <div className="rounded-xl border border-zinc-800 bg-[#0f1729] p-6 space-y-4">
+            <div className="text-center space-y-2">
+              <div className="text-5xl">🔐</div>
+              <h2 className="text-lg font-semibold">Connect with Nostr</h2>
+              <p className="text-sm text-zinc-400">Sign in with your Nostr key to manage your stalls and products</p>
             </div>
-          ))}
-        </div>
+            <NostrLogin />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Dashboard</h2>
+              <NostrLogin />
+            </div>
+            <Dashboard pubkey={merchantPubkey} />
+          </>
+        )}
       </div>
     </div>
   )

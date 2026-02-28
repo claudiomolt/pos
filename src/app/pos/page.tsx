@@ -222,8 +222,6 @@ export default function POSPage() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         onCheckout={() => { setCartOpen(false); handleCheckout() }}
-        currency={selectedCurrency}
-        formatPrice={(amount, cur) => formatPrice(convert(amount, cur === 'SAT' ? 'SAT' : cur, selectedCurrency), selectedCurrency, rates)}
       />
 
       {/* Footer Cart Bar (menu mode only) */}

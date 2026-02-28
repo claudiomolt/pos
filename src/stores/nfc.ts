@@ -22,8 +22,8 @@ function detectNFCAvailability(): boolean {
   // Web NFC API
   if ('NDEFReader' in window) return true
   // Android WebView bridge
-  if ('Android' in window && typeof (window as Record<string, unknown>).Android === 'object') {
-    const androidBridge = (window as Record<string, unknown>).Android as Record<string, unknown>
+  if ('Android' in window && typeof ((window as unknown) as Record<string, unknown>).Android === 'object') {
+    const androidBridge = ((window as unknown) as Record<string, unknown>).Android as Record<string, unknown>
     if (typeof androidBridge.readNFC === 'function') return true
   }
   return false
