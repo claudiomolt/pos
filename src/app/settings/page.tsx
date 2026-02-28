@@ -6,6 +6,8 @@ import { useSettingsStore } from '@/stores/settings'
 import { useCurrencyStore } from '@/stores/currency'
 import { DEFAULT_RELAYS } from '@/config/constants'
 
+const APP_VERSION = '0.1.0'
+
 // ─── types ────────────────────────────────────────────────────────────────────
 
 interface RelayStatus {
@@ -42,6 +44,67 @@ async function checkRelay(url: string): Promise<boolean> {
 // ─── main component ───────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+  const [clearingCache, setClearingCache] = useState(false)
+
+  // Listen for SW updates
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SW_UPDATED') {
+        setUpdateAvailable(true)
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', handleMessage)
+
+    const reg = navigator.serviceWorker.getRegistration()
+    reg.then((registration) => {
+      if (!registration) return
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
+        if (!newWorker) return
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            setUpdateAvailable(true)
+          }
+        })
+      })
+    })
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage)
+    }
+  }, [])
+
+  const handleClearCache = async () => {
+    setClearingCache(true)
+    try {
+      // Clear all SW caches
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+      // Clear IndexedDB (Dexie pos-cache)
+      if ('indexedDB' in window) {
+        await new Promise<void>((resolve, reject) => {
+          const req = indexedDB.deleteDatabase('pos-cache')
+          req.onsuccess = () => resolve()
+          req.onerror = () => reject(req.error)
+          req.onblocked = () => resolve()
+        })
+      }
+      // Unregister service worker
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(registrations.map((r) => r.unregister()))
+      }
+      window.location.reload()
+    } catch {
+      setClearingCache(false)
+    }
+  }
+
   // settings store
   const {
     activeCurrencies,
@@ -181,6 +244,19 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#060a12] text-white">
       <Navbar title="Settings" />
+
+      {/* ── Update banner ──────────────────────────────────────────────── */}
+      {updateAvailable && (
+        <div className="bg-[#f7931a]/10 border-b border-[#f7931a]/30 px-4 py-3 flex items-center justify-between">
+          <span className="text-sm text-[#f7931a]">⚡ New version available</span>
+          <button
+            onClick={handleClearCache}
+            className="text-sm font-medium text-[#f7931a] hover:text-white transition underline"
+          >
+            Tap to update
+          </button>
+        </div>
+      )}
 
       <div className="px-4 py-6 space-y-8 max-w-lg mx-auto pb-20">
 
@@ -425,6 +501,40 @@ export default function SettingsPage() {
               onChange={(v) => setDisplay({ showQRFullscreen: v })}
             />
           </div>
+        </section>
+
+        {/* ── Cache & App ───────────────────────────────────────────────── */}
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            App
+          </h2>
+
+          <div className="rounded-lg border border-zinc-800 bg-[#0f1729] px-4 py-3 flex items-center justify-between">
+            <div>
+              <span className="text-sm text-zinc-300">Version</span>
+              <p className="text-xs text-zinc-600 mt-0.5">v{APP_VERSION}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleClearCache}
+            disabled={clearingCache}
+            className="w-full rounded-lg border border-red-800/60 bg-red-950/30 px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-950/50 hover:text-red-300 hover:border-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {clearingCache ? (
+              <>
+                <span className="animate-spin">↻</span>
+                Clearing…
+              </>
+            ) : (
+              <>
+                🗑️ Clear Cache &amp; Reload
+              </>
+            )}
+          </button>
+          <p className="text-xs text-zinc-600">
+            Clears all cached data and reloads the app. Use if you&apos;re seeing an outdated version.
+          </p>
         </section>
 
       </div>
