@@ -1,53 +1,44 @@
 'use client'
 
-import { Plus, Minus } from 'lucide-react'
 import type { Product } from '@/types/product'
 
-interface ProductCardProps {
+interface ProductRowProps {
   product: Product
   quantity: number
   displayPrice: string
   onAdd: () => void
   onRemove: () => void
+  unavailable?: boolean
 }
 
-export default function ProductCard({ product, quantity, displayPrice, onAdd, onRemove }: ProductCardProps) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-[#0f1729] px-4 py-3 active:border-[#f7931a]/50 transition">
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-white truncate">{product.name}</p>
-        {product.description && (
-          <p className="text-xs text-zinc-500 truncate">{product.description}</p>
-        )}
-        <p className="text-[#f7931a] font-semibold text-sm mt-0.5">{displayPrice}</p>
-      </div>
+export default function ProductRow({ product, quantity, displayPrice, onAdd, onRemove, unavailable }: ProductRowProps) {
+  const hasQty = quantity > 0
 
-      <div className="flex items-center gap-2 ml-3">
-        {quantity > 0 ? (
-          <>
-            <button
-              onClick={onRemove}
-              className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center active:bg-zinc-700 transition"
-            >
-              <Minus size={14} className="text-white" />
-            </button>
-            <span className="w-6 text-center font-bold text-white">{quantity}</span>
-            <button
-              onClick={onAdd}
-              className="w-8 h-8 rounded-lg bg-[#f7931a] flex items-center justify-center active:bg-[#e8851a] transition"
-            >
-              <Plus size={14} className="text-black" />
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onAdd}
-            className="w-10 h-10 rounded-xl bg-[#f7931a] flex items-center justify-center active:bg-[#e8851a] transition"
-          >
-            <Plus size={18} className="text-black" />
-          </button>
+  return (
+    <button
+      onClick={unavailable ? undefined : onAdd}
+      disabled={unavailable}
+      className={`w-full flex items-center justify-between py-3.5 transition-colors select-none ${
+        unavailable ? 'opacity-30 cursor-not-allowed' : 'active:bg-[#18181b]'
+      } ${hasQty ? 'border-l-2 border-[#f7931a] pl-3' : 'border-l-2 border-transparent pl-3'}`}
+    >
+      <span className={`text-sm truncate ${hasQty ? 'text-white' : 'text-zinc-300'}`}>
+        {product.name}
+      </span>
+
+      <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+        <span
+          className="text-sm text-zinc-500"
+          style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
+        >
+          {displayPrice}
+        </span>
+        {hasQty && (
+          <span className="w-5 h-5 rounded-full bg-[#f7931a] text-black text-[10px] font-bold flex items-center justify-center">
+            {quantity}
+          </span>
         )}
       </div>
-    </div>
+    </button>
   )
 }

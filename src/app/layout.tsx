@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import ServiceWorkerRegistration from '@/components/shared/ServiceWorkerRegistration'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
   title: 'Mobile POS',
@@ -31,7 +32,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-[#060a12] text-white`}>
+      <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased bg-[#09090b] text-white`}>
         {children}
         <Toaster position="top-center" theme="dark" richColors />
         <ServiceWorkerRegistration />
