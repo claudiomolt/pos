@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import ServiceWorkerRegistration from '@/components/shared/ServiceWorkerRegistration'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Mobile POS',
   },
   icons: {
-    apple: '/icon-192.png',
+    apple: '/icons/icon-192.png',
   },
 }
 
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#0f1729',
+  themeColor: '#f7931a',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased bg-[#060a12] text-white`}>
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   )

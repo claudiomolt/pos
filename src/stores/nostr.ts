@@ -1,12 +1,20 @@
-// TODO: Nostr store — NDK instance, connection state, signer
 import { create } from 'zustand'
+import { DEFAULT_RELAYS } from '@/config/constants'
 
 interface NostrState {
-  connected: boolean
-  pubkey: string | null
+  relays: string[]
+  merchantPubkey: string | null
+  isConnected: boolean
+  setRelays: (relays: string[]) => void
+  setMerchantPubkey: (pubkey: string | null) => void
+  setConnected: (connected: boolean) => void
 }
 
-export const useNostrStore = create<NostrState>(() => ({
-  connected: false,
-  pubkey: null,
+export const useNostrStore = create<NostrState>((set) => ({
+  relays: DEFAULT_RELAYS,
+  merchantPubkey: null,
+  isConnected: false,
+  setRelays: (relays) => set({ relays }),
+  setMerchantPubkey: (pubkey) => set({ merchantPubkey: pubkey }),
+  setConnected: (connected) => set({ isConnected: connected }),
 }))
