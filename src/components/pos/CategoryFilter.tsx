@@ -1,12 +1,14 @@
 'use client'
 
+import { memo } from 'react'
+
 interface CategoryFilterProps {
   categories: string[]
   selected: string | null
   onSelect: (cat: string | null) => void
 }
 
-export default function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps) {
+function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps) {
   if (categories.length === 0) return null
 
   return (
@@ -37,3 +39,5 @@ export default function CategoryFilter({ categories, selected, onSelect }: Categ
     </div>
   )
 }
+
+export default memo(CategoryFilter)

@@ -1,5 +1,39 @@
 # Mobile POS v2 — Remake Spec
 
+## Current Status
+
+> Last updated: 2026-02-28
+
+### ✅ Completed Issues
+
+| Issue | Title | Description |
+|-------|-------|-------------|
+| #1 | Project scaffolding | Next.js 15 + Tailwind + shadcn/ui setup |
+| #2 | Nostr NDK integration | NDK singleton, relay connection, store |
+| #3 | Settings store | Lightning address, currencies, relays via Zustand |
+| #4 | LNURL resolution | LUD-06 resolve + LUD-21 ownership verification |
+| #5 | Numpad POS mode | Free-amount entry with multi-currency display |
+| #6 | QR payment screen | bolt11 QR + zap receipt listener |
+| #7 | NIP-15 marketplace | Stall + product parsing, Nostr subscription |
+| #8 | Menu mode | Product grid with categories and cart |
+| #9 | NFC payments | Web NFC + Android bridge for LaWallet cards |
+| #10 | Admin panel | Stall/product CRUD, sales history |
+| #11 | PWA support | Service worker, manifest, installable |
+| #12 | Multi-currency rates | yadio.io integration via /api/rates |
+| #37 | Unit tests | Vitest tests for lib/nostr, lib/currency, config (27 tests) |
+| #40 | Error handling | Graceful fallbacks across payment + Nostr flows |
+| #42 | Performance | React.memo on ProductCard/CategoryFilter, useMemo for totals |
+| #43 | Documentation | README rewrite, DEPLOYMENT.md, SPEC.md status section |
+
+### 🔄 In Progress / Planned
+
+- Issue #38 — E2E tests (Playwright)
+- Issue #39 — Accessibility audit
+- Issue #41 — Offline mode improvements
+- Issue #44 — i18n (English/Spanish)
+
+---
+
 > Análisis del repo original `lawalletio/mobile-pos` + spec para rebuild desde cero.
 
 ## 1. Funcionalidades del POS Original

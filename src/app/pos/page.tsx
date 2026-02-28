@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useId } from 'react'
+import { useState, useCallback, useId, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNostrStore } from '@/stores/nostr'
 import { useSettingsStore } from '@/stores/settings'
@@ -82,9 +82,12 @@ export default function POSPage() {
     router.push(`/pos/${orderId}?amount=${cents}&currency=${selectedCurrency}`)
   }, [cents, selectedCurrency, router])
 
-  const itemCount = getItemCount()
-  const totalSats = getTotal()
-  const currencyChips = activeCurrencies.length > 0 ? activeCurrencies : ['SAT', 'ARS', 'USD']
+  const itemCount = useMemo(() => getItemCount(), [cart])
+  const totalSats = useMemo(() => getTotal(), [cart])
+  const currencyChips = useMemo(
+    () => activeCurrencies.length > 0 ? activeCurrencies : ['SAT', 'ARS', 'USD'],
+    [activeCurrencies]
+  )
   const showMenuTab = hasProducts && !isLoading
 
   // Format display amount for numpad
@@ -102,7 +105,8 @@ export default function POSPage() {
     return '$'
   }
 
-  const getSecondaryDisplay = () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const secondaryDisplay = useMemo(() => {
     if (cents === 0) return ''
     const amount = selectedCurrency === 'SAT' ? cents : cents / 100
     if (selectedCurrency === 'SAT') {
@@ -113,7 +117,7 @@ export default function POSPage() {
     const sats = convert(amount, selectedCurrency, 'SAT')
     if (sats > 0) return `≈ ${Math.round(sats).toLocaleString('es-AR')} sats`
     return ''
-  }
+  }, [cents, selectedCurrency, convert])
 
   // Charge button label for numpad
   const getChargeLabel = () => {
@@ -212,7 +216,7 @@ export default function POSPage() {
               className="text-sm text-zinc-500 mt-2 h-5"
               style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
             >
-              {getSecondaryDisplay()}
+              {secondaryDisplay}
             </div>
           </div>
 

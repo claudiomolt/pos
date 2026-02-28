@@ -14,6 +14,7 @@ import { usePrint } from '@/hooks/usePrint'
 import { createZapRequest } from '@/lib/nostr/zap'
 import { showError, showSuccess, showWarning } from '@/lib/toast'
 import { DEFAULT_RELAYS } from '@/config/constants'
+import { supportsNip57, ProxyNotAvailableError, createProxyWallet } from '@/lib/proxy/lncurl'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -136,9 +137,44 @@ export default function OrderPage({ params }: Props) {
       setAmountSats(sats)
       const milliSats = sats * 1000
 
+      // Check NIP-57 support; attempt proxy if missing
+      const nip57Supported = supportsNip57(lnurl)
+
+      if (!nip57Supported) {
+        // Destination doesn't support zaps — try proxy wallet, fall back gracefully
+        try {
+          // This will throw ProxyNotAvailableError until lncurl.lol is integrated
+          const proxy = await createProxyWallet()
+
+          const proxyInvoice = await proxy.invoiceCallback(milliSats)
+          setInvoice(proxyInvoice)
+          setPageState('ready')
+
+          proxy.onPayment(async () => {
+            const forwarded = await proxy.forward(destination!, milliSats)
+            if (forwarded) {
+              showSuccess('Pago reenviado al destino')
+            } else {
+              showError('Error al reenviar el pago')
+            }
+            proxy.dispose()
+          })
+
+          // No NWC pubkey for payment monitoring — rely on proxy callback
+          return
+        } catch (e) {
+          if (e instanceof ProxyNotAvailableError) {
+            // Proxy not yet available — fall through to direct LNURL (no zap)
+            console.warn('[OrderPage] Proxy unavailable, using direct LNURL (no NIP-57)')
+          } else {
+            throw e
+          }
+        }
+      }
+
       // Build zap request if supported
       let zapRequestEncoded: string | undefined
-      if (lnurl.allowsNostr && lnurl.nostrPubkey && merchantPubkey) {
+      if (nip57Supported && lnurl.nostrPubkey && merchantPubkey) {
         try {
           zapRequestEncoded = await createZapRequest({
             amount: milliSats,

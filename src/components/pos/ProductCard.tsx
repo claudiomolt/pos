@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import type { Product } from '@/types/product'
 
 interface ProductRowProps {
@@ -11,7 +12,7 @@ interface ProductRowProps {
   unavailable?: boolean
 }
 
-export default function ProductRow({ product, quantity, displayPrice, onAdd, onRemove, unavailable }: ProductRowProps) {
+function ProductRow({ product, quantity, displayPrice, onAdd, onRemove, unavailable }: ProductRowProps) {
   const hasQty = quantity > 0
 
   return (
@@ -42,3 +43,5 @@ export default function ProductRow({ product, quantity, displayPrice, onAdd, onR
     </button>
   )
 }
+
+export default memo(ProductRow)
