@@ -71,6 +71,7 @@ export async function fetchRemoteSettings(
 
     // Sort by created_at desc, get newest
     const latest = eventArray.sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0]
+    if (!latest) return null
     const parsed = JSON.parse(latest.content) as SyncableSettings
     return parsed
   } catch (err) {
