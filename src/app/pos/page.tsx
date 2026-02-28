@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useNostrStore } from '@/stores/nostr'
 import { useSettingsStore } from '@/stores/settings'
 import { usePOSStore } from '@/stores/pos'
-import { useCurrencyStore } from '@/stores/currency'
 import { useStall } from '@/hooks/useStall'
 import { useProducts } from '@/hooks/useProducts'
 import { useCurrency } from '@/hooks/useCurrency'
@@ -23,7 +22,7 @@ export default function POSPage() {
   const lightningAddress = useSettingsStore((s) => s.lightningAddress)
 
   const { cart, addToCart, updateQuantity, clearCart, getTotal, getItemCount } = usePOSStore()
-  const { rates, convert } = useCurrency()
+  const { convert } = useCurrency()
 
   const [mode, setMode] = useState<'numpad' | 'menu'>('numpad')
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency || 'SAT')
@@ -61,7 +60,10 @@ export default function POSPage() {
     })
   }, [])
 
-  // Cart item quantity lookup
+  const handleReset = useCallback(() => {
+    setCents(0)
+  }, [])
+
   const getItemQty = (productId: string) => {
     return cart.find((c) => c.product.id === productId)?.quantity ?? 0
   }
@@ -82,8 +84,8 @@ export default function POSPage() {
 
   const itemCount = getItemCount()
   const totalSats = getTotal()
-
   const currencyChips = activeCurrencies.length > 0 ? activeCurrencies : ['SAT', 'ARS', 'USD']
+  const showMenuTab = hasProducts && !isLoading
 
   // Format display amount for numpad
   const getNumpadDisplay = () => {
@@ -100,7 +102,6 @@ export default function POSPage() {
     return '$'
   }
 
-  // Secondary conversion
   const getSecondaryDisplay = () => {
     if (cents === 0) return ''
     const amount = selectedCurrency === 'SAT' ? cents : cents / 100
@@ -114,48 +115,63 @@ export default function POSPage() {
     return ''
   }
 
-  const showMenuTab = hasProducts && !isLoading
+  // Charge button label for numpad
+  const getChargeLabel = () => {
+    if (cents === 0) return 'Cobrar'
+    if (selectedCurrency === 'SAT') return `Cobrar ${cents.toLocaleString('es-AR')} SAT`
+    return `Cobrar $${(cents / 100).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+  }
 
   return (
     <div className="h-dvh flex flex-col bg-[#09090b] text-white overflow-hidden" style={{ fontFamily: 'var(--font-geist), sans-serif' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+
+      {/* ── Navbar ── */}
+      <nav className="flex items-center justify-between px-4 pt-3 pb-2 flex-shrink-0">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+          </svg>
+          <span className="text-sm">
+            {mode === 'numpad' ? 'Modo CAJA' : 'Menú'}
+          </span>
+        </button>
+
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[#f7931a] text-sm">⚡</span>
-          <span className="text-zinc-400 text-sm truncate" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-            {lightningAddress || 'sin configurar'}
+          <span className="text-[#f7931a] text-xs">⚡</span>
+          <span className="text-zinc-600 text-xs truncate max-w-[140px]" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
+            {lightningAddress || '—'}
           </span>
         </div>
+
         <button
           onClick={() => router.push('/settings')}
           className="text-zinc-600 hover:text-zinc-400 transition p-1"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </button>
-      </div>
+      </nav>
 
-      {/* Mode Toggle — only show if products exist */}
+      {/* ── Mode Toggle (only if products exist) ── */}
       {showMenuTab && (
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-2 flex-shrink-0">
           <div className="flex bg-[#18181b] rounded-lg p-0.5">
             <button
               onClick={() => setMode('numpad')}
               className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${
-                mode === 'numpad'
-                  ? 'bg-[#27272a] text-white'
-                  : 'text-zinc-500'
+                mode === 'numpad' ? 'bg-[#27272a] text-white' : 'text-zinc-500'
               }`}
             >
-              MONTO
+              CAJA
             </button>
             <button
               onClick={() => setMode('menu')}
               className={`flex-1 py-2 text-xs font-medium rounded-md transition-all relative ${
-                mode === 'menu'
-                  ? 'bg-[#27272a] text-white'
-                  : 'text-zinc-500'
+                mode === 'menu' ? 'bg-[#27272a] text-white' : 'text-zinc-500'
               }`}
             >
               MENÚ
@@ -169,16 +185,39 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* NUMPAD MODE */}
+
+        {/* ════════════════════════════════════════════
+            NUMPAD MODE
+            Layout: Amount → Currency pills → Charge → Keyboard (bottom)
+            ════════════════════════════════════════════ */}
         <div
           className={`flex-1 flex flex-col transition-opacity duration-200 ${
             mode === 'numpad' ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
         >
-          {/* Currency pills */}
-          <div className="flex gap-1.5 px-4 pb-2">
+          {/* Amount display — top, centered, expands to fill */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div
+              className="text-5xl font-bold tracking-tight text-white leading-none"
+              style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
+            >
+              {getCurrencySymbol() && (
+                <span className="text-zinc-500 text-3xl">{getCurrencySymbol()}</span>
+              )}
+              {getCurrencySymbol() ? ' ' : ''}{getNumpadDisplay()}
+            </div>
+            <div
+              className="text-sm text-zinc-500 mt-2 h-5"
+              style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
+            >
+              {getSecondaryDisplay()}
+            </div>
+          </div>
+
+          {/* Currency pills — between amount and charge */}
+          <div className="flex justify-center gap-1.5 px-4 pb-3 flex-shrink-0">
             {currencyChips.map((c) => (
               <button
                 key={c}
@@ -186,7 +225,7 @@ export default function POSPage() {
                   setSelectedCurrency(c)
                   setCents(0)
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   c === selectedCurrency
                     ? 'bg-[#f7931a]/15 text-[#f7931a] border border-[#f7931a]/30'
                     : 'bg-[#18181b] text-zinc-500 border border-transparent'
@@ -197,29 +236,8 @@ export default function POSPage() {
             ))}
           </div>
 
-          {/* Amount display */}
-          <div className="text-center py-4 px-4">
-            <div
-              className="text-5xl font-bold tracking-tight text-white"
-              style={{ fontFamily: 'var(--font-geist-mono), monospace' }}
-            >
-              <span className="text-zinc-500 text-3xl">{getCurrencySymbol()}</span>
-              {' '}{getNumpadDisplay()}
-            </div>
-            <div className="text-sm text-zinc-500 mt-1.5" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-              {getSecondaryDisplay()}
-            </div>
-          </div>
-
-          {/* Numpad */}
-          <Numpad
-            currency={selectedCurrency}
-            onInput={handleNumpadInput}
-            onBackspace={handleBackspace}
-          />
-
-          {/* Cobrar button */}
-          <div className="px-4 pb-4 mt-auto">
+          {/* Charge button — ABOVE keyboard */}
+          <div className="px-4 pb-3 flex-shrink-0">
             <button
               onClick={handleFreeCheckout}
               disabled={cents === 0}
@@ -229,12 +247,25 @@ export default function POSPage() {
                   : 'bg-[#18181b] text-zinc-600 cursor-not-allowed'
               }`}
             >
-              Cobrar ⚡
+              {getChargeLabel()} ⚡
             </button>
+          </div>
+
+          {/* Keyboard — pinned to bottom */}
+          <div className="flex-shrink-0">
+            <Numpad
+              currency={selectedCurrency}
+              onInput={handleNumpadInput}
+              onBackspace={handleBackspace}
+              onReset={handleReset}
+            />
           </div>
         </div>
 
-        {/* MENU MODE */}
+        {/* ════════════════════════════════════════════
+            MENU MODE
+            Layout: Categories → Products (scrollable) → Footer cart bar
+            ════════════════════════════════════════════ */}
         {showMenuTab && (
           <div
             className={`flex-1 flex flex-col min-h-0 transition-opacity duration-200 ${
@@ -252,16 +283,17 @@ export default function POSPage() {
               isLoading={isLoading}
             />
 
-            {/* Footer */}
-            <div className="px-4 py-3 flex items-center gap-3">
+            {/* Footer cart bar */}
+            <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0 border-t border-zinc-800/50">
               {itemCount > 0 && (
                 <button
                   onClick={clearCart}
-                  className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#18181b] text-zinc-500 active:bg-[#27272a] transition"
+                  className="flex items-center gap-1.5 h-11 rounded-xl bg-[#18181b] text-zinc-500 px-3 active:bg-[#27272a] transition"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                   </svg>
+                  <span className="text-xs font-medium">{itemCount}</span>
                 </button>
               )}
               <button
@@ -273,7 +305,7 @@ export default function POSPage() {
                     : 'bg-[#18181b] text-zinc-600 cursor-not-allowed'
                 }`}
               >
-                <span>Cobrar ⚡</span>
+                <span>{itemCount > 0 ? 'Ver carrito' : 'Cobrar'}</span>
                 {itemCount > 0 && (
                   <span style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
                     {formatMenuTotal(totalSats, selectedCurrency, convert)}
