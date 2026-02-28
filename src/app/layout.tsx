@@ -8,13 +8,13 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
-  title: 'Mobile POS',
+  title: 'Lightning POS',
   description: 'Bitcoin Lightning Point of Sale — powered by Nostr',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Mobile POS',
+    title: 'Lightning POS',
   },
   icons: {
     apple: '/icons/icon-192.png',

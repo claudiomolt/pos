@@ -1,5 +1,5 @@
 {
-  "name": "Mobile POS",
+  "name": "Lightning POS",
   "short_name": "POS",
   "description": "Bitcoin Lightning Point of Sale — powered by Nostr",
   "start_url": "/",

@@ -66,7 +66,7 @@ export default function SetupPage() {
         {/* Logo / Title */}
         <div className="text-center space-y-2">
           <div className="text-5xl">⚡</div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Mobile POS</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Lightning POS</h1>
           <p className="text-sm text-zinc-400">Bitcoin Lightning · Powered by Nostr</p>
         </div>
 
