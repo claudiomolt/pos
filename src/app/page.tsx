@@ -138,8 +138,8 @@ export default function SetupPage() {
       </div>
 
       {/* Footer */}
-      <footer className="absolute bottom-4 left-0 right-0 text-center">
-        <p className="text-[10px] text-zinc-700 font-mono">v0.1.0 · NIP-15 · La Crypta</p>
+      <footer className="fixed bottom-3 left-0 right-0 text-center">
+        <p className="text-[11px] text-zinc-500 font-mono">v0.1.0 · NIP-15 · La Crypta</p>
       </footer>
     </main>
   )
